@@ -1,0 +1,147 @@
+/*
+text-break переносит не вмещенный текст
+*/
+
+/* profile */
+
+.profile, .profile-edit {
+  padding: 20px 0;
+}
+
+.nav-item a {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.profile-avatar {
+  object-fit: cover;
+  width: 200px;
+  height: 200px;
+  padding: 0.25rem;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  max-width: 100%;
+}
+
+h2 {
+  margin-bottom: 1.5rem;
+}
+
+.font-profile-head {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #5a6268;
+}
+
+.font-profile-head:nth-child(2) {
+  margin-top: 0;
+}
+
+.tags {
+  margin-right: 10px;
+}
+
+.tags:last-child {
+  margin-right: 0;
+}
+
+.profile .profile-input {
+  display: none;
+}
+
+.btn-success {
+  margin: 0;
+}
+
+.nav-tabs .nav-link {
+  cursor: pointer;
+}
+
+.profile-tabs .nav-tabs {
+  margin-bottom: 1rem;
+}
+
+.media-object {
+  width: 75px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.card img {
+  height: 320px;
+  object-fit: cover;
+}
+
+.aside-button {
+  margin-bottom: 20px;
+  justify-content: flex-end;
+}
+
+.aside-button button {
+  margin-left: 10px;
+}
+
+.dropdown-menu {
+  transform: translate3d(-115px, 40px, 0px) !important; 
+}
+
+.dropdown-menu button,
+.aside-button .dropdown-toggle ::after {
+  margin-left: 0;
+}
+
+.disabled-button {
+  pointer-events: none;
+  opacity: 50%;
+}
+
+.profile .tab-content
+{
+    height: 400px;
+    /* max-height: 400px; */
+    overflow-x: hidden;
+}
+
+.profile-report-button{
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  padding: 0.25rem 1.5rem;
+  clear: both;
+  font-weight: 400;
+  color: #212529;
+  text-align: inherit;
+  white-space: nowrap;
+  background-color: transparent;
+  border: 0;
+  margin-left: 0;
+}
+
+.modal-item{
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* edit */
+.profile-edit .align-items-center {
+  padding-top: 20px;
+}
+
+.profile-edit .form-check-inline {
+  width: 100%;
+  justify-content: center;
+}
+
+.profile-edit-label {
+  margin-right: 15px;
+}
+
+.profile-edit .font-profile-head {
+  text-align: center;
+}
+
+.profile-edit select {
+  width: 100%;
+}

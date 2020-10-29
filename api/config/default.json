@@ -1,0 +1,7 @@
+{
+    "port": "5000",
+    "urlDb": "postgres://ffood:pps@localhost:5432/flamefood",
+    "salt": "_271kweV77",
+    "email": "tes",
+    "emailPass": "tea"
+}
