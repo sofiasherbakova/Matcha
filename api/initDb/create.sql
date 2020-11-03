@@ -28,6 +28,7 @@ CREATE TABLE  Users (
     photos text[3][3] DEFAULT ARRAY[['image/jpg','1.jpg'],['image/jpg','1.jpg'],['image/jpg','1.jpg']],
     location text[3],
     created_at_user timestamp DEFAULT CURRENT_TIMESTAMP,
+    count_reports int DEFAULT 0,
     PRIMARY KEY (id)
 );
 
@@ -74,6 +75,24 @@ CREATE TABLE User_Tags (
     idTag int,
     FOREIGN KEY (idUser) REFERENCES Users (id),
     FOREIGN KEY (idTag) REFERENCES Tags (id)
+);
+
+CREATE TABLE Reports (
+    id SERIAL,
+    report text,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE User_Reports (
+    id SERIAL,
+    idFrom int,
+    idTo int,
+    idReport int,
+    message text,
+    FOREIGN KEY (idFrom) REFERENCES Users (id),
+    FOREIGN KEY (idTo) REFERENCES Users (id),
+    FOREIGN KEY (idReport) REFERENCES Reports (id),
+    PRIMARY KEY (id)
 );
 
 INSERT INTO Users (nickName, firstName, lastName, email, dateBirth, password, location) VALUES
@@ -137,3 +156,9 @@ INSERT INTO User_Tags (idUser, idTag) VALUES
     ('1', '3'),
     ('1', '4'),
     ('1', '7');
+
+INSERT INTO Reports (Report) VALUES
+    ('pornography'),
+    ('spam'),
+    ('offensive behavior'),
+    ('fraud');

@@ -3,7 +3,6 @@ import { Container, Alert, Input } from 'reactstrap';
 import { useState } from 'react';
 import { Col, FormGroup, Label, FormFeedback } from 'reactstrap';
 import { isValidInput, isValidPassword } from '../util/check';
-import Report from './Report';
 // const concat = require('concat-stream');
 
 function InputForm(props) {
@@ -48,7 +47,6 @@ const NotFound = () => {
                     </Alert>
                 {/* <form action='/api/user/image/rkina/2' method='post' encType='multipart/form-data'> */}
                 <label htmlFor='1'>Here</label>
-                <Report buttonLabel='Report'/>
                 <InputForm 
                 // onBlur={checkBtn} 
                 labelName='Last name' name='lastName' placeholder='Ng' type='text' feedback='Only symbols are required' />

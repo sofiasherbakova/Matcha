@@ -139,6 +139,13 @@ const insertReport = (params) => {
   return db.one(sql, params);
 }
 
+const updateCountReports = (params) => {
+  const sql = `UPDATE Users SET count_reports = (count_reports + 1)
+  WHERE id = (SELECT id FROM Users WHERE nickName = $2) RETURNING count_reports`;
+
+  return db.one(sql, params);
+}
+
 const putImage = (position, type, src, login) => {
   const params = [position, type, src, login];
 
@@ -212,3 +219,4 @@ exports.getTimeView = getTimeView;
 exports.updateViewFailed = updateViewFailed;
 exports.insertViewFailed = insertViewFailed;
 exports.insertReport = insertReport;
+exports.updateCountReports =  updateCountReports;

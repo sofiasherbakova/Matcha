@@ -2,7 +2,7 @@ const { Router } = require('express');
 const router = Router();
 const { sign, getPassword, getOnlyPass, getEmail, getLogin, getProfile, getViews, getLikes, sendMessage,
     getMessage, getCards, getStatus, putImage, getImage,
-    updateStatus, insertStatus, insertReport } = require('../models/user');
+    updateStatus, insertStatus, insertReport, updateCountReports} = require('../models/user');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const upload = multer({ dest: "uploads" });
@@ -407,11 +407,26 @@ router.post('/report', async (req, res) => {
 
         insertReport([me, you, reason, message])
             .then(data => {
-                if (data.length > 0)
-                    res.status(200).json({
-                        message: "Ok",
-                        success: true
-                    });
+                console.log("DATA", data);
+                if (data.id)
+                {
+                    updateCountReports([me, you, reason, message])
+                    .then(data => {
+                        console.log("HEY", data);
+                        if (data.count_reports >= 3)
+                            res.status(200).json({
+                                message: "Ok",
+                                result : data.count_reports,
+                                success: true
+                            });
+                    })
+                    .catch((e) => {
+                        res.status(200).json({
+                            message: e.message,
+                            success: false
+                        })
+                    })
+                }
             })
             .catch((e) => {
                 res.status(200).json({
@@ -427,8 +442,6 @@ router.post('/report', async (req, res) => {
         })
     }
 })
-
-
 
 
 router.post('/update', async (req, res) => {

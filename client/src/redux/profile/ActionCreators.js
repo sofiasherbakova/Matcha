@@ -86,11 +86,18 @@ export const fetchStatus = (me, you) => (dispatch) => {
         .catch(error => dispatch(statusFailed(error.message)));
 };
 
-export const fetchReport = (data) => () => {
-    console.log("DATA - ", data);
+export const fetchReport = (data) => (dispatch) => {
+    //dispatch(profileLoading());
     return request('/api/user/report', data, 'POST')
-        .then(response => response.json())
-        //.catch(error => dispatch(reportFailed(error.message)));
+        .then(res => res.json())
+        .then(response => {
+            console.log("OKKKKKK", response);
+            if (response.success)
+                console.log("OK") ////////!!!!!!!!!!!!! ФИДБЭК!
+            else
+                dispatch(statusFailed(response.message))
+        })
+        .catch(error => dispatch(statusFailed(error.message)));
 };
 
 export const fetchUpdateStatus = (me, you, status, newStatus) => (dispatch) => {

@@ -11,7 +11,7 @@ import { fetchProfile, fetchView, fetchLike, fetchStatus, fetchUpdateStatus, fet
 import { Loading } from '../Loading';
 import NotFound from '../notFound';
 import { request } from '../../util/http';
-import { Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import './Profile.css';
 
 const mapStateToProps = (state) => {
@@ -154,8 +154,7 @@ const Report = (props) => {
       buttonLabel,
       className
     } = props;
-    
-    console.log("ПРОПСЫ -", props);
+
     const [modal, setModal] = useState(false);
     const [reason, setReason] = useState("pornography");
     const [message, setMessage] = useState();
@@ -169,21 +168,25 @@ const Report = (props) => {
                 reason : reason,
                 message : message
             }
-
         props.fetch(data);
         setModal(!modal);
     }
 
     return (
       <div>
-        <div className="profile-report-button" onClick={toggle}>{buttonLabel}</div>
+        <UncontrolledButtonDropdown>
+        <DropdownToggle caret></DropdownToggle>
+            <DropdownMenu>
+                <DropdownItem onClick={toggle}>{buttonLabel}</DropdownItem>
+            </DropdownMenu>
+        </UncontrolledButtonDropdown>
         <Modal isOpen={modal} toggle={toggle} className={className}>
           <ModalHeader toggle={toggle}>Report user</ModalHeader>
           <ModalBody>
                 Please, let us know the reason why this user should be blocked:
                 <Input className="modal-item" type="select" onChange={e => setReason(e.target.value)}>
                   <option value="pornography">Pornography</option>
-                  <option value="Spam">Spam</option>
+                  <option value="spam">Spam</option>
                   <option value="offensive behavior">Offensive behavior</option>
                   <option value="fraud">Fraud</option>
                 </Input>
@@ -200,7 +203,6 @@ const Report = (props) => {
 
 
 function AsideButton(props) {
-    console.log("AAAA - ", props.fetchReport);
     const changeStatus = (e) => {
         if (e.target.value === 'like' || e.target.value === 'ignore' || e.target.value === 'unlike') {
             props.fetchUpdateStatus(props.me, props.you, props.status, e.target.value);
@@ -231,14 +233,6 @@ function AsideButton(props) {
                     Ignore
                 </Button>
                 <Report buttonLabel='Report page' onClick={changeStatus} me={props.me} you={props.you} fetch={props.fetchReport}/>
-                <UncontrolledButtonDropdown>
-                    <DropdownToggle caret></DropdownToggle>
-                    <DropdownMenu>
-                        <DropdownItem>Like</DropdownItem>
-                        <DropdownItem>Ignore</DropdownItem>
-                        {/* <Report buttonLabel='Report page' value='report'/> */}
-                    </DropdownMenu>
-                </UncontrolledButtonDropdown>
             </Row>
         );
     }
