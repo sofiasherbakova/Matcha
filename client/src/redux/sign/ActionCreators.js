@@ -35,6 +35,11 @@ export const formEmail = (email) => ({
     email: email
 });
 
+export const formSex = (sex) => ({
+    type: ActionTypes.USER_FORM_SEX_ADD,
+    sex: sex
+});
+
 export const formPassword = (pass) => ({
     type: ActionTypes.USER_FORM_PASSWORD_ADD,
     password: pass
@@ -66,6 +71,10 @@ export const setEmail = (email) => (dispatch) => {
     dispatch(formEmail(email));
 };
 
+export const setSex = (sex) => (dispatch) => {
+    dispatch(formSex(sex));
+};
+
 export const setPassword = (pass) => (dispatch) => {
     dispatch(formPassword(pass));
 };
@@ -81,11 +90,32 @@ export const setDate = (date) => (dispatch) => {
 export const fetchRegister = (data) => (dispatch) => {
     dispatch(formLoading());
 
-    return request('/api/user/register', data, 'POST')
+    return request('/api/register', data, 'POST')
         .then(res => res.json())
-        .then( result => {
+        .then(result => {
             if (result.success === true) {
-                dispatch(formSubmit());
+                const login = result.login;
+                console.log(result,login);
+                request('https://extreme-ip-lookup.com/json/')
+                    .then(res => res.json())
+                    .then((result) => {
+                        const data = {
+                            country: result.country,
+                            city: result.city,
+                            longitude: result.lon,
+                            latitude: result.lat
+                        }
+                        request(`/api/register/location/${login}`, data, 'POST')
+                            .then(res => res.json())
+                            .then(result => {
+                                console.log(result);
+                                if (result.success)
+                                    dispatch(formSubmit());
+                                else
+                                    dispatch(formFailed(result.message))
+                            })
+                            .catch(error => dispatch(formFailed(error.message)));
+                    })
             }
             else {
                 dispatch(formFailed(result.message))

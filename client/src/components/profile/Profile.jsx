@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import {
-    Container, Row, Col, Nav, NavItem, NavLink, Card, CardImg, CardBody, TabContent, TabPane, Button, Media, Input, Label,
-    UncontrolledButtonDropdown, DropdownMenu, DropdownItem, DropdownToggle
+    Alert, Container, Row, Col, Nav, NavItem, NavLink, Card, CardImg, CardBody, TabContent, TabPane, Button, Media, Input, Label,
+    UncontrolledButtonDropdown, DropdownMenu, DropdownItem, DropdownToggle, Modal, ModalHeader, ModalBody, ModalFooter
 } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import classnames from 'classnames';
-import { fetchProfile, fetchView, fetchLike, fetchStatus, fetchUpdateStatus, fetchUpdateView, fetchReport} from '../../redux/profile/ActionCreators';
+import { fetchProfile, fetchView, fetchLike, fetchStatus, fetchUpdateStatus, fetchUpdateView, fetchReport } from '../../redux/profile/ActionCreators';
 import { Loading } from '../Loading';
 import NotFound from '../notFound';
 import { request } from '../../util/http';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import './Profile.css';
+import moment from 'moment';
 
 const mapStateToProps = (state) => {
     return {
@@ -28,7 +28,7 @@ const mapDispatchToProps = (dispatch) => ({
     fetchLike: (nickname) => dispatch(fetchLike(nickname)),
     fetchStatus: (me, you) => dispatch(fetchStatus(me, you)),
     fetchUpdateView: (me, you) => dispatch(fetchUpdateView(me, you)),
-    fetchUpdateStatus: (me, you, status, newStatus) => dispatch(fetchUpdateStatus(me, you, status, newStatus)), 
+    fetchUpdateStatus: (me, you, status, newStatus) => dispatch(fetchUpdateStatus(me, you, status, newStatus)),
     fetchReport: (data) => dispatch(fetchReport(data))
 });
 
@@ -47,7 +47,7 @@ function TagsList(props) {
 }
 
 function PhotoList(props) {
-    function putPhoto(e, item, photo) {
+    function putPhoto(e, item) {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const type = e.target.files[0].type;
@@ -57,7 +57,7 @@ function PhotoList(props) {
             }
             let formData = new FormData();
             formData.append('photo', file);
-            request(`/api/user/image/${props.me}/${item}`, formData, 'POST', 'image')
+            request(`/api/image/${props.me}/${item}`, formData, 'POST', 'image')
                 .then(data => {
                     if (data)
                         props.fetchProfile(props.me);
@@ -65,7 +65,6 @@ function PhotoList(props) {
                 .catch(e => {
                     alert(e.message);
                 })
-
         }
     }
 
@@ -74,15 +73,14 @@ function PhotoList(props) {
         listItems = props.photos.map((photo, item) =>
             <Col md="4" key={item}>
                 <Card className="mb-4 shadow-sm">
-                    <CardImg src={`/api/user/image/${props.me}/${item + 1}/${photo[1]}`} alt={"Photo profile"} />
+                    <CardImg src={`/api/image/${props.me}/${item + 1}/${photo[1]}`} alt={"Photo profile"} />
                     {
                         props.check &&
                         <CardBody>
-                            <div className="d-flex justify-content-between align-items-center">
+                            <div className="d-flex justify-content-center align-items-center">
                                 <Label className="btn btn-sm btn-success">Add
-                                    <Input className="profile-input" type="file" onChange={e => putPhoto(e, item + 1, photo[1])} />
+                                    <Input className="profile-input" type="file" onChange={e => putPhoto(e, item + 1)} />
                                 </Label>
-                                <Button size="sm" color="danger">Delete</Button>
                             </div>
                         </CardBody>
                     }
@@ -101,11 +99,14 @@ function ViewsList(props) {
             <Col xs="12" className="mt-4" key={item}>
                 <Media>
                     <Media left middle>
-                        <Media object src={`/api/user/image/${view.nickname}/1/${view.photos}`} alt={`Profile photo ${view.nickname}`} />
+                        <Media object src={`/api/image/${view.nickname}/1/${view.photos}`} alt={`Profile photo ${view.nickname}`} />
                     </Media>
                     <Media body className="ml-4">
                         <Media heading>{view.nickname}, {view.age}</Media>
                         <p>{view.about}</p>
+                        <p className="profile-tabs-item">
+                            {moment(view.visitime).fromNow()}
+                        </p>
                         <Link to={`/users/${view.nickname}`} className="btn btn-secondary">Go to profile</Link>
                     </Media>
                 </Media>
@@ -123,17 +124,24 @@ function ViewsList(props) {
         );
 }
 
+
+
 function LikesList(props) {
     if (props.mylikes.length > 0) {
+        console.log(moment(props.mylikes[0].time, 'YYYY-MM-DD, h:mm:ss').fromNow());
+        console.log(props.mylikes[0].time);
         const listItems = props.mylikes.map((like, item) =>
             <Col xs="12" className="mt-4" key={item}>
                 <Media>
                     <Media left middle>
-                        <Media object src={`/api/user/image/${like.nickname}/1/${like.photos}`} alt={`Profile photo ${like.nickname}`} />
+                        <Media object src={`/api/image/${like.nickname}/1/${like.photos}`} alt={`Profile photo ${like.nickname}`} />
                     </Media>
                     <Media body className="ml-4">
                         <Media heading>{like.nickname}, {like.age}</Media>
                         <p>{like.about}</p>
+                        <p className="profile-tabs-item">
+                            {moment(like.time).fromNow()}
+                        </p>
                         <Link to={`/users/${like.nickname}`} className="btn btn-secondary">Go to profile</Link>
                     </Media>
                 </Media>
@@ -149,58 +157,52 @@ function LikesList(props) {
         );
 }
 
-const Report = (props) => {
-    const {
-      buttonLabel,
-      className
-    } = props;
-
+function Report(props) {
     const [modal, setModal] = useState(false);
     const [reason, setReason] = useState("pornography");
     const [message, setMessage] = useState();
 
-    const toggle = () => setModal(!modal);
-  
+    const toggleModal = () => setModal(!modal);
+
     const reportSubmit = () => {
-            const data = {
-                me: props.me,
-                you: props.you, 
-                reason : reason,
-                message : message
-            }
+        const data = {
+            me: props.me,
+            you: props.you,
+            reason: reason,
+            message: message
+        }
         props.fetch(data);
         setModal(!modal);
     }
 
     return (
-      <div>
-        <UncontrolledButtonDropdown>
-        <DropdownToggle caret></DropdownToggle>
-            <DropdownMenu>
-                <DropdownItem onClick={toggle}>{buttonLabel}</DropdownItem>
-            </DropdownMenu>
-        </UncontrolledButtonDropdown>
-        <Modal isOpen={modal} toggle={toggle} className={className}>
-          <ModalHeader toggle={toggle}>Report user</ModalHeader>
-          <ModalBody>
-                Please, let us know the reason why this user should be blocked:
-                <Input className="modal-item" type="select" onChange={e => setReason(e.target.value)}>
-                  <option value="pornography">Pornography</option>
-                  <option value="spam">Spam</option>
-                  <option value="offensive behavior">Offensive behavior</option>
-                  <option value="fraud">Fraud</option>
-                </Input>
-              <Input type="textarea" placeholder="Descride the reason for the report" rows={5} onChange={e => setMessage(e.target.value)}/>
-          </ModalBody>
-          <ModalFooter>
-            <Button color="secondary" onClick={toggle}>Cancel</Button>
-            <Button color="danger" onClick={reportSubmit} reason={reason} message={message} >Report</Button>{' '}
-          </ModalFooter>
-        </Modal>
-      </div>
+        <div>
+            <UncontrolledButtonDropdown>
+                <DropdownToggle caret></DropdownToggle>
+                <DropdownMenu>
+                    <DropdownItem onClick={toggleModal}>Report page</DropdownItem>
+                </DropdownMenu>
+            </UncontrolledButtonDropdown>
+            <Modal isOpen={modal}>
+                <ModalHeader>Report user</ModalHeader>
+                <ModalBody>
+                    <p>Please, let us know the reason why this user should be blocked:</p>
+                    <Input className="modal-item" type="select" onChange={e => setReason(e.target.value)}>
+                        <option value="pornography">Pornography</option>
+                        <option value="spam">Spam</option>
+                        <option value="offensive behavior">Offensive behavior</option>
+                        <option value="fraud">Fraud</option>
+                    </Input>
+                    <Input type="textarea" placeholder="Descride the reason for the report" rows={5} onChange={e => setMessage(e.target.value)} />
+                </ModalBody>
+                <ModalFooter className="justify-content-between">
+                    <Button color="success" onClick={reportSubmit} reason={reason} message={message} >Report</Button>{' '}
+                    <Button color="secondary" onClick={toggleModal}>Cancel</Button>
+                </ModalFooter>
+            </Modal>
+        </div>
     );
-  }
-
+}
 
 function AsideButton(props) {
     const changeStatus = (e) => {
@@ -232,7 +234,7 @@ function AsideButton(props) {
                     onClick={changeStatus}>
                     Ignore
                 </Button>
-                <Report buttonLabel='Report page' onClick={changeStatus} me={props.me} you={props.you} fetch={props.fetchReport}/>
+                <Report onClick={changeStatus} me={props.me} you={props.you} fetch={props.fetchReport} />
             </Row>
         );
     }
@@ -243,13 +245,13 @@ const Profile = (props) => {
         props.fetchProfile(props.match.params.nickname);
         props.fetchView(props.match.params.nickname);
         props.fetchLike(props.match.params.nickname);
-        props.fetchStatus(props.login.me.nickname, props.match.params.nickname);
-        props.fetchUpdateView(props.login.me.nickname, props.match.params.nickname);
+        if (props.login.me.nickname !== props.match.params.nickname) {
+            props.fetchStatus(props.login.me.nickname, props.match.params.nickname);
+            props.fetchUpdateView(props.login.me.nickname, props.match.params.nickname);
+        }
     }, [props.match.params.nickname, props.profile.status]);
 
-    console.log(props.profile);
-
-    // const tags = ["test1", "test2", "test3"];
+    // console.log(props.profile);
 
     const [activeTab, setActiveTab] = useState('1');
     const toggle = tab => {
@@ -271,6 +273,18 @@ const Profile = (props) => {
             </Container>
         );
     }
+    else if (props.profile.info != null && props.profile.info.count_reports > 2) {
+
+        return (
+            <section className="page-state">
+                <Container>
+                    <Row>
+                        <Alert color="info">This account has been banned.</Alert>
+                    </Row>
+                </Container>
+            </section>
+        );
+    }
     else if (props.profile.info != null) {
         const isMe = (props.login.me.nickname === props.match.params.nickname);
 
@@ -282,13 +296,13 @@ const Profile = (props) => {
                         me={props.login.me.nickname}
                         you={props.match.params.nickname}
                         fetchUpdateStatus={props.fetchUpdateStatus}
-                        fetchReport={props.fetchReport} />
-
+                        fetchReport={props.fetchReport}
+                    />
                     <Row>
                         <Col className="col-lg-3">
                             {
                                 props.profile.info.photos &&
-                                <img src={`/api/user/image/${props.profile.info.nickname}/1/${props.profile.info.photos[0][1]}`} alt={`Avatar ${props.profile.info.nickname}`} className="mx-auto d-block profile-avatar rounded-circle" />
+                                <img src={`/api/image/${props.profile.info.nickname}/1/${props.profile.info.photos[0][1]}`} alt={`Avatar ${props.profile.info.nickname}`} className="mx-auto d-block profile-avatar rounded-circle" />
                             }
                         </Col>
                         <Col ls="9" className="font-profile-head">
@@ -307,7 +321,8 @@ const Profile = (props) => {
                         </Col>
                     </Row>
 
-                    {props.profile.info.tags &&
+                    {
+                        props.profile.info.tags &&
                         <Row>
                             <Col>
                                 <p className="font-profile-head">Tags</p>
@@ -353,5 +368,4 @@ const Profile = (props) => {
         );
 }
 
-// connect(mapDispatchToProps)(PhotoList);
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Profile));

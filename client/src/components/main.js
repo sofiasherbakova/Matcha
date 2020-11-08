@@ -9,6 +9,7 @@ import Profile from './profile/Profile';
 import EditProfile from './profile/EditProfile';
 import Footer from './Footer';
 import Remind from './remind/remind';
+import Restore from './restore/restore';
 
 export function Main() {
 
@@ -17,12 +18,14 @@ export function Main() {
             <Router>
             <Header />
                 <Switch>
-                    <Route path='/login' component={Login} />
+                    <Route exact={true} path='/login' component={Login} />
+                    <Route path='/login/:nickname/:hash' component={Login} />
                     <Route path='/register' component={Sign} />
                     <Route exact={true} path='/users/page/:page' component={Users} />
                     <Route path='/users/:nickname' component={Profile} />
                     <Route path='/edit' component={EditProfile} />
-                    <Route path='/remind' component={Remind} />
+                    <Route exact={true} path='/remind' component={Remind} />
+                    <Route path='/remind/:email/:hash' component={Restore} />
                     <Route component={NotFound} />
                 </Switch>
             </Router>

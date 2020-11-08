@@ -12,6 +12,7 @@ import { withRouter } from 'react-router-dom';
 import { logOut } from '../redux/login/ActionCreators';
 import { useHistory } from "react-router-dom";
 import { useEffect } from 'react';
+import { initFilter } from '../redux/filter/ActionCreators';
 
 const mapStateToProps = (state) => {
     return {
@@ -20,17 +21,18 @@ const mapStateToProps = (state) => {
 }
 
 const mapDispatchToProps = (dispatch) => ({
-    logOut: () => dispatch(logOut())
+    logOut: () => dispatch(logOut()),
+    clearFilter: () => dispatch(initFilter())
 });
 
 const Header = (props) => {
     const history = useHistory();
     const name = props.login.isLogged === 'true' ? <i className="fa fa-sign-out"></i> : <i className="fa fa-sign-in"></i>;
-    const urls = ['/login', '/register', '/remind'];
+    const urls = ['/login', '/register', '/remind', '/confirm'];
     const path = props.location.pathname;
 
     useEffect(() => {
-        if (!props.login.isLogged && !path.includes('/register') && !path.includes('/remind'))
+        if (!props.login.isLogged && !path.includes('/register') && !path.includes('/remind') && !path.includes('/confirm'))
             history.push('/login');
     }, [path]);
 
@@ -48,7 +50,7 @@ const Header = (props) => {
                     }
                     {(!urls.includes(path) || path !== '/edit') && path.includes('/users/page') &&
                         <NavItem>
-                            <NavLink href={`/users/${props.login.nickname}`}>
+                            <NavLink href={`/users/${props.login.me.nickname}`}>
                                 <i className="fa fa-user"></i>
                             </NavLink>
                         </NavItem>
@@ -62,7 +64,10 @@ const Header = (props) => {
                     }
                     {!urls.includes(path) &&
                         <NavItem>
-                            <NavLink href='/login' onClick={props.logOut}>
+                            <NavLink href='/login' onClick={() => {
+                                props.clearFilter();
+                                props.logOut();
+                            }}>
                                 {name}
                             </NavLink>
                         </NavItem>

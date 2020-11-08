@@ -1,5 +1,6 @@
 import * as ActionTypes from './ActionTypes';
 import { request } from '../../util/http';
+import { fetchUpdateLogin } from '../login/ActionCreators';
 
 export const editProfileStatus = (status) => ({
     type: ActionTypes.EDIT_PROFILE_STATUS_ADD,
@@ -31,7 +32,7 @@ export const editFirstnameAdd = (firstname) => ({
 
 export const editLastnameAdd = (lastname) => ({
     type: ActionTypes.LASTNAME_ADD,
-    lastName: lastname
+    lastname: lastname
 });
 
 export const editDatebirthAdd = (datebirth) => ({
@@ -56,12 +57,17 @@ export const editSexAdd = (sex) => ({
 
 export const editSexpreferenceAdd = (sexpreference) => ({
     type: ActionTypes.SEXPREFERENCES_ADD,
-    sexpreference: sexpreference
+    sexpreferences: sexpreference
 });
 
 export const editTagsAdd = (tags) => ({
     type: ActionTypes.TAGS_ADD,
     tags: tags
+});
+
+export const editCoordsAdd = (coords) => ({
+    type: ActionTypes.COORDS_ADD,
+    coords: coords
 });
 
 export const editNewpassAdd = (newpass) => ({
@@ -98,32 +104,48 @@ export const setAbout = (date) => (dispatch) => {
     dispatch(editAboutAdd(date));
 };
 
-export const setSex = (date) => (dispatch) => {
-    dispatch(editSexAdd(date));
+export const setSex = (sex) => (dispatch) => {
+    dispatch(editSexAdd(sex));
 };
 
-export const setSexPref = (date) => (dispatch) => {
-    dispatch(editSexpreferenceAdd(date));
+export const setSexPref = (sexpref) => (dispatch) => {
+    dispatch(editSexpreferenceAdd(sexpref));
 };
 
-export const setTags = (date) => (dispatch) => {
-    dispatch(editTagsAdd(date));
+export const setTags = (tags) => (dispatch) => {
+    dispatch(editTagsAdd(tags));
+};
+
+export const setCoords = (coords) => (dispatch) => {
+    dispatch(editCoordsAdd(coords));
 };
 
 export const setNewPassword = (pass) => (dispatch) => {
-    dispatch(editNewpassAdd (pass));
+    dispatch(editNewpassAdd(pass));
 };
 
 export const initFormEdit = () => (dispatch) => {
     dispatch(editProfileClear());
 };
 
-export const fetchEditProfile = (data) => (dispatch) => {
+export const fetchEditProfile = (data, login) => (dispatch) => {
     dispatch(editProfileLoading());
 
-    return request('/api/user/edit', data, 'POST')
-        .then(response => response.json())
-        .then(result => dispatch(editProfileStatus(result)))
+    const p1 = request(`/api/user/edit/tags/${login}`, data, 'POST');
+    const p2 = request(`api/user/edit/location/${login}`, data, 'POST');
+
+    Promise.all([p1, p2])
+        .then(() => {
+            request(`/api/user/edit/${login}`, data, 'POST')
+                .then(response => response.json())
+                .then(result => {
+                    console.log(result);
+                    dispatch(fetchUpdateLogin(result.nickname))
+                        .then(() => {
+                            dispatch(editProfileStatus(result));
+                        })
+                })
+                .catch(error => dispatch(editProfileFailed(error.message)));
+        })
         .catch(error => dispatch(editProfileFailed(error.message)));
 };
-

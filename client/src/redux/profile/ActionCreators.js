@@ -18,7 +18,7 @@ export const profileFailed = (msg) => ({
 export const fetchProfile = (nickname) => (dispatch) => {
     dispatch(profileLoading());
 
-    return request('/api/user/' + nickname)
+    return request('/api/user/profile/' + nickname)
         .then(response => response.json())
         .then(result => dispatch(profileAdd(result)))
         .catch(error => dispatch(profileFailed(error.message)));
@@ -37,7 +37,7 @@ export const viewFailed = (msg) => ({
 export const fetchView = (nickname) => (dispatch) => {
     dispatch(profileLoading());
 
-    return request('/api/user/views/' + nickname)
+    return request('/api/user/profile/views/' + nickname)
         .then(response => response.json())
         .then(result => dispatch(viewAdd(result)))
         .catch(error => dispatch(viewFailed(error.message)));
@@ -56,7 +56,7 @@ export const likeFailed = (msg) => ({
 export const fetchLike = (nickname) => (dispatch) => {
     dispatch(profileLoading());
 
-    return request('/api/user/likes/' + nickname)
+    return request('/api/user/profile/likes/' + nickname)
         .then(response => response.json())
         .then(result => dispatch(likeAdd(result)))
         .catch(error => dispatch(likeFailed(error.message)));
@@ -80,23 +80,9 @@ export const fetchStatus = (me, you) => (dispatch) => {
         you: you
     }
 
-    return request('/api/user/status', data, 'POST')
+    return request('/api/user/profile/status', data, 'POST')
         .then(response => response.json())
         .then(result => dispatch(statusAdd(result)))
-        .catch(error => dispatch(statusFailed(error.message)));
-};
-
-export const fetchReport = (data) => (dispatch) => {
-    //dispatch(profileLoading());
-    return request('/api/user/report', data, 'POST')
-        .then(res => res.json())
-        .then(response => {
-            console.log("OKKKKKK", response);
-            if (response.success)
-                console.log("OK") ////////!!!!!!!!!!!!! ФИДБЭК!
-            else
-                dispatch(statusFailed(response.message))
-        })
         .catch(error => dispatch(statusFailed(error.message)));
 };
 
@@ -110,10 +96,11 @@ export const fetchUpdateStatus = (me, you, status, newStatus) => (dispatch) => {
         newStatus: newStatus
     }
 
-    return request('/api/user/update', data, 'POST')
+    return request('/api/user/profile/status/update', data, 'POST')
         .then(response => response.json())
         // .then(result => dispatch(statusAdd(result)))
         .then(result => {
+            console.log('gere',result);
             if (result.message === 'Ok') {
                 dispatch(statusAdd(result));
             }
@@ -137,7 +124,20 @@ export const fetchUpdateView = (me, you) => (dispatch) => {
         you: you
     }
 
-    return request('/api/user/view', data, 'POST')
+    return request('/api/user/profile/view', data, 'POST')
         .then(response => response.json())
         .catch(error => dispatch(updateViewFailed(error.message)));
+};
+
+export const fetchReport = (data) => (dispatch) => {
+    //dispatch(profileLoading());
+    return request('/api/user/profile/report', data, 'POST')
+        .then(res => res.json())
+        .then(response => {
+            if (response.success)
+                console.log("OK") ////////!!!!!!!!!!!!! ФИДБЭК!
+            else
+                dispatch(statusFailed(response.message))
+        })
+        .catch(error => dispatch(statusFailed(error.message)));
 };

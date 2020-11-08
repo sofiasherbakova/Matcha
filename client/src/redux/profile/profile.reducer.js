@@ -40,6 +40,7 @@ export const ProfileReducer = (state = {
 
         case ActionTypes.UPDATE_VIEW_FAILED:
             return { ...state, isLoading: false, errProfile: action.payload, status: null };
+
         default:
             return state;
     }

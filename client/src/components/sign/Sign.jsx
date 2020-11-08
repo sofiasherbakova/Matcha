@@ -1,12 +1,14 @@
 import React from 'react';
 import { useState } from 'react';
-import { setLogin, setFirstName, setLastName, setEmail, setPassword, setRepassword, setDate, fetchRegister } from '../../redux/sign/ActionCreators';
+import { setLogin, setFirstName, setLastName, setEmail, setPassword, setRepassword, setDate, fetchRegister, setSex } from '../../redux/sign/ActionCreators';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Row, Col, FormGroup, Label, Input, FormFeedback, Button, Container } from 'reactstrap';
+import { NavLink, Card, Row, Col, FormGroup, Label, Input, FormFeedback, Button, Container, Alert } from 'reactstrap';
 import { isValidInput, isValidPassword } from '../../util/check';
 import { request } from '../../util/http';
 import { useHistory } from "react-router-dom";
+import { Loading } from '../Loading';
+import './Sign.css';
 
 const mapStateToProps = (state) => {
     return {
@@ -22,6 +24,7 @@ const mapDispatchToProps = (dispatch) => ({
     setPassword: (Password) => dispatch(setPassword(Password)),
     setRepassword: (Repassword) => dispatch(setRepassword(Repassword)),
     setDate: (date) => dispatch(setDate(date)),
+    setSex: (sex) => dispatch(setSex(sex)),
     fetchRegister: (data) => dispatch(fetchRegister(data))
 });
 
@@ -64,7 +67,7 @@ function InputFormWithFetch(props) {
     const [feedback, setFeedback] = useState('Oopsy');
 
     const checkExist = (name, value) => {
-        request(`/api/user/register/check/${name}/${value}`)
+        request(`/api/register/check/${name}/${value}`)
             .then(res => res.json())
             .then(
                 result => {
@@ -88,6 +91,12 @@ function InputFormWithFetch(props) {
             setFeedback(`${name} is invalid`)
         }
     };
+
+    if (props.isLoading) {
+        return (
+            <Loading />
+        )
+    }
 
     return (
         <Row>
@@ -174,21 +183,12 @@ function Password(props) {
     )
 }
 
-function SignUpBtn(props) {
-    return (
-        <Col>
-            <Button className="btn btn" color="primary" type="submit" disabled={props.isActiveBtn} >Sign Up</Button>
-        </Col>
-    )
-}
-
 const Sign = (props) => {
     const history = useHistory();
     const [isActiveBtn, toggleBtn] = useState(false);
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        const { nickName, lastName, firstName, email, password, repassword, dateBirth } = props.sign;
+    const handleSubmit = () => {
+        const { nickName, lastName, firstName, email, password, dateBirth, sex } = props.sign;
 
         let data = {
             nickName: nickName,
@@ -196,20 +196,14 @@ const Sign = (props) => {
             firstName: firstName,
             email: email,
             password: password,
-            date: dateBirth
+            date: dateBirth,
+            sex: sex
         }
 
-        request("api/user/register", data, 'POST')
-            .then(res => res.json())
-            .then(
-                (res) => {
-                    if (res.success)
-                        history.push('/login');
-                },
-                (error) => {
-                    console.log(error.message);
-                }
-            )
+        props.fetchRegister(data)
+            .then(() => {
+                history.push('/login');
+            })
     }
 
     const checkBtn = () => {
@@ -222,35 +216,58 @@ const Sign = (props) => {
             toggleBtn(true);
     }
 
+    if (props.sign.isLoading) {
+        return (
+            <Loading />
+        )
+    }
+
+    if (props.errMsg) {
+        return (
+            <Alert color='info'>{props.errMsg}</Alert>
+        )
+    }
+
     return (
-        <Row>
-            <Col md={8} className="m-auto">
-                <Container>
-                    <form onSubmit={handleSubmit}>
-                        <Row xs='1'>
-                            <InputForm
-                                set={props.setLastName} onBlur={checkBtn} labelName='Last name'
-                                name='lastName' placeholder='Ng' type='text' feedback='Only symbols are required'
-                            />
-                            <InputForm
-                                set={props.setFirstName} onBlur={checkBtn} labelName='First name'
-                                name='firstName' placeholder='Duong' type='text' feedback='Only symbols are required'
-                            />
-                        </Row>
-                        <Row xs='1'>
-                            <InputFormWithFetch set={props.setLogin} onBlur={checkBtn} labelName='login' placeholder='rkina7' />
-                            <InputFormWithFetch set={props.setEmail} onBlur={checkBtn} labelName='email' placeholder='rkina@mail.ru' />
-                        </Row>
+        <Col md={4} className="m-auto">
+            <Card className="sign-container" body>
+                <Container >
+                    <Row xs='2'>
+                        <InputForm
+                            set={props.setLastName} onBlur={checkBtn} labelName='Last name'
+                            name='lastName' placeholder='Ng' type='text' feedback='Only symbols are required'
+                        />
+                        <InputForm
+                            set={props.setFirstName} onBlur={checkBtn} labelName='First name'
+                            name='firstName' placeholder='Duong' type='text' feedback='Only symbols are required'
+                        />
+                    </Row>
+                        <InputFormWithFetch set={props.setLogin} onBlur={checkBtn} labelName='Login' placeholder='rkina7' />
+                        <InputFormWithFetch set={props.setEmail} onBlur={checkBtn} labelName='Email' placeholder='rkina@mail.ru' />
+                    <Row>
                         <InputForm
                             set={props.setDate} onBlur={checkBtn} labelName='Date birth'
                             name='birthDate' type='date' feedback='You too young for this'
                         />
-                        <Password setPass={props.setPassword} onBlur={checkBtn} />
-                        <SignUpBtn isActiveBtn={isActiveBtn} onBlur={checkBtn} />
-                    </form>
+                        <Col>
+                            <label>Sex</label>
+                            <Input type='select' defaultValue={props.sign} onChange={e => {
+                                props.setSex(e.target.value);
+                                checkBtn();
+                            }}>
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                            </Input>
+                        </Col>
+                    </Row>
+                    <Password setPass={props.setPassword} onBlur={checkBtn} />
+                    <Col className="m-auto" sm={{ size: 4, order: 1, offset: 2}}>
+                        <Button color="primary" type="submit" disabled={isActiveBtn} onClick={handleSubmit} onBlur={checkBtn} block>Sign Up</Button>
+                        <NavLink className="center" href='/login' >Back</NavLink>
+                    </Col>
                 </Container>
-            </Col>
-        </Row>
+            </Card>
+        </Col>
     )
 }
 

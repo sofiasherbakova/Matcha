@@ -1,13 +1,14 @@
 import * as ActionTypes from './ActionTypes';
 
 const initialState = {
-    isLoading: true,
+    isLoading: false,
     errMsg: null,
-    success: false,
+    success: null,
     firstName: null,
     lastName: null,
     nickName: null,
     email: null,
+    sex: 'female',
     password: null,
     repassword: null,
     dateBirth: null
@@ -16,7 +17,7 @@ const initialState = {
 export const SignReducer = (state = initialState, action) => {
     switch (action.type) {
         case ActionTypes.USER_FORM_LOADING:
-            return { ...state, isLoading: false, errMsg: action.message };
+            return { ...state, isLoading: true, errMsg: action.message };
 
         case ActionTypes.USER_FORM_FAILED:
             return { ...state, isLoading: false, errMsg: action.payload };
@@ -32,6 +33,9 @@ export const SignReducer = (state = initialState, action) => {
 
         case ActionTypes.USER_FORM_EMAIL_ADD:
             return { ...state, isLoading: false, errMsg: null, email: action.email };
+
+        case ActionTypes.USER_FORM_SEX_ADD:
+            return { ...state, isLoading: false, errMsg: null, sex: action.sex };
 
         case ActionTypes.USER_FORM_PASSWORD_ADD:
             return { ...state, isLoading: false, errMsg: null, password: action.password };
