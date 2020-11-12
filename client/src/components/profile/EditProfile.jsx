@@ -60,7 +60,6 @@ function InputForm(props) {
                     password: value
                 };
 
-                console.log('her', data);
                 request('/api/register/check/pass', data, 'POST')
                     .then(res => res.json())
                     .then(result => {
@@ -156,11 +155,18 @@ function Geo(props) {
 
 const EditProfile = (props) => {
     const history = useHistory();
+
+    const { clearForm } = props;
+    const { editProfileStatus } = props.edit;
+    const { nickname } = props.login.me;
+    const { params } = props.match;
+
     useEffect(() => {
-        props.clearForm();
-        if (props.edit.editProfileStatus !== null)
-            history.push(`/users/${props.login.me.nickname}`);
-    }, [props.match.params, props.edit.editProfileStatus]);
+        if (editProfileStatus !== null) {
+            clearForm();
+            history.push(`/users/${nickname}`);
+        }
+    }, [params, editProfileStatus, history, nickname, clearForm]);
 
     const [isActiveBtn, toggleBtn] = useState(true);
 
@@ -183,7 +189,7 @@ const EditProfile = (props) => {
         // if (data) {
         props.fetchEditProfile(data, props.login.me.nickname);
         // }
-
+        props.clearForm();
     }
 
     const tagsHandle = (e) => {
@@ -234,10 +240,10 @@ const EditProfile = (props) => {
 
                 <Container>
                     {/* <ModalBody className="text-center"> */}
-                    <InputForm name='login' me={props.login.me.nickname} label='Username' feedback='Invalid login' set={props.setLogin} checkBtn={checkBtn} />
+                    <InputForm name='Login' me={props.login.me.nickname} label='Username' feedback='Invalid login' set={props.setLogin} checkBtn={checkBtn} />
                     <InputForm name='firstName' me={props.login.me.firstname} label='First name' feedback='Only symbols are required' set={props.setFirstName} checkBtn={checkBtn} />
                     <InputForm name='lastName' me={props.login.me.lastname} label='Last name' feedback='Only symbols are required' set={props.setLastName} checkBtn={checkBtn} />
-                    <InputForm name='email' me={props.login.me.email} label='Email' set={props.setEmail} checkBtn={checkBtn} />
+                    <InputForm name='Email' me={props.login.me.email} label='Email' set={props.setEmail} feedback='Invalid email' checkBtn={checkBtn} />
                     <InputForm name='bio' me={props.login.me.about} label='Biography' set={props.setAbout} checkBtn={checkBtn} />
                     <InputForm name='birthDate' me={moment(props.login.me.datebirth).format('YYYY-MM-DD')} type='date' label='Date Birth' feedback='Too young' set={props.setDate} checkBtn={checkBtn} />
 

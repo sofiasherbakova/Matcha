@@ -1,8 +1,8 @@
 const router = require('express').Router();
 const { getPassword, getProfile, getViews, getLikes,
-    getCards, getStatus, getTimeView, updateViewFailed, insertViewFailed,
+    getCards, getStatus, getTimeView, updateView, insertView,
     updateStatus, insertStatus, editProfile, deleteTags, insertTags, insertLocation,
-    getCountCards, getCities, getCountires, getInfoLogin, updateRate, insertReport, updateCountReports } = require('../models/user');
+    getCountCards, getCities, getCountires, getInfoLogin, updateRate, insertReport, updateCountReports, setStatus, getLogs, addLog, checkConnect } = require('../models/user');
 const bcrypt = require('bcrypt');
 const config = require('config');
 const API_KEY = config.get('apiKey');
@@ -230,6 +230,7 @@ router.post('/profile/status/update', async (req, res) => {
         const { me, you, status, newStatus } = req.body;
         const promise = (status === 'like' || status === 'ignore' || status === 'unlike') ? updateStatus([me, you, newStatus]) : insertStatus([me, you, newStatus]);
         let value = 10;
+        let result = newStatus;
 
         if (newStatus === 'unlike' || newStatus === 'ignore')
             value = -10;
@@ -237,20 +238,53 @@ router.post('/profile/status/update', async (req, res) => {
         promise
             .then(data => {
                 if (data) {
-                    updateRate([value, you])
-                        .then((data) => {
-                            res.status(200).json({
-                                result: newStatus,
-                                message: "Ok",
-                                success: true
+                    const promise1 = updateRate([value, you]);
+                    let promise2 = addLog([me, you, newStatus, `${newStatus}d your profile`]);
+
+                    if (newStatus === 'like') {
+                        checkConnect([me, you])
+                            .then((data) => {
+                                let promises = [promise1];
+                                if (data.length == 2) {
+                                    promise2 = addLog([me, you, newStatus, 'connected with you']);
+                                    const promise3 = addLog([you, me, newStatus, 'connected with you`']);
+                                    result = 'connect';
+                                    promises.push(promise3);
+                                }
+                                promises.push(promise2);
+
+                                Promise.all(promises)
+                                    .then(() => {
+                                        res.status(200).json({
+                                            data: result,
+                                            message: "Ok",
+                                            success: true
+                                        })
+                                    })
+                                    .catch((e) => {
+                                        res.status(200).json({
+                                            message: e.message,
+                                            success: false
+                                        })
+                                    })
                             })
-                        })
-                        .catch((e) => {
-                            res.status(200).json({
-                                message: e.message,
-                                success: false
+                    }
+                    else {
+                        promise1
+                            .then(() => {
+                                res.status(200).json({
+                                    result: newStatus,
+                                    message: "Ok",
+                                    success: true
+                                })
                             })
-                        })
+                            .catch((e) => {
+                                res.status(200).json({
+                                    message: e.message,
+                                    success: false
+                                })
+                            })
+                    }
                 }
             })
             .catch((e) => {
@@ -276,38 +310,22 @@ router.post('/profile/view', async (req, res) => {
         if (me != you) {
             getTimeView([me, you])
                 .then(data => {
-                    if (data.length > 0) {
-                        updateViewFailed([me, you])
-                            .then(data => {
-                                if (data)
-                                    res.status(200).json({
-                                        message: "Ok",
-                                        success: true
-                                    });
+                    const promise1 = addLog([me, you, 'view', `visited you profile`]);
+                    const promise2 = (data.length > 0) ? updateView([me, you]) : insertView([me, you]);
+
+                    Promise.all([promise1, promise2])
+                        .then(() => {
+                            res.status(200).json({
+                                message: "Ok",
+                                success: true
+                            });
+                        })
+                        .catch(() => {
+                            res.status(200).json({
+                                message: e.message,
+                                success: false
                             })
-                            .catch((e) => {
-                                res.status(200).json({
-                                    message: e.message,
-                                    success: false
-                                })
-                            })
-                    }
-                    else {
-                        insertViewFailed([me, you])
-                            .then(data => {
-                                if (data)
-                                    res.status(200).json({
-                                        message: "Ok",
-                                        success: true
-                                    });
-                            })
-                            .catch((e) => {
-                                res.status(200).json({
-                                    message: e.message,
-                                    success: false
-                                })
-                            })
-                    }
+                        })
                 })
         }
     }
@@ -479,25 +497,25 @@ router.post('/users/page', async (req, res) => {
         // const page = (req.body.page * 6);
         // const sort = req.body.sort;
 
-        const { nickname, mySex, mySexpref, page, sort, ageFrom, ageTo, rateFrom, rateTo, sex, tags, distance } = req.body;
+        const { nickname, mySex, mySexpref, page, sortType, ageFrom, ageTo, rateFrom, rateTo, sex, tags, distance } = req.body;
         let sqlSort = '',
             sqlFilter = '',
             sqlSortTags = '',
             limit = page * 6,
             params = [nickname, mySex, mySexpref, limit, tags];
 
-        if (sort === 'ageAsc' || sort === 'ageDesc')
-            sqlSort = (sort === 'ageAsc') ? 'age ASC, count DESC, rate DESC' : 'age DESC, count DESC, rate DESC';
-        else if (sort === 'rateAsc' || sort === 'rateDesc')
-            sqlSort = (sort === 'rateAsc') ? 'rate ASC, age ASC, count DESC' : 'rate DESC, age ASC, count DESC';
-        else if (sort === 'tagsAsc' || sort === 'tagsDesc') {
-            sqlSort = (sort === 'tagsAsc') ? 'rate DESC, age ASC' : 'rate DESC, age ASC';
-            sqlSortTags = (sort === 'tagsAsc')
+        if (sortType === 'ageAsc' || sortType === 'ageDesc')
+            sqlSort = (sortType === 'ageAsc') ? 'age ASC, count DESC, rate DESC' : 'age DESC, count DESC, rate DESC';
+        else if (sortType === 'rateAsc' || sortType === 'rateDesc')
+            sqlSort = (sortType === 'rateAsc') ? 'rate ASC, age ASC, count DESC' : 'rate DESC, age ASC, count DESC';
+        else if (sortType === 'tagsAsc' || sortType === 'tagsDesc') {
+            sqlSort = (sortType === 'tagsAsc') ? 'rate DESC, age ASC' : 'rate DESC, age ASC';
+            sqlSortTags = (sortType === 'tagsAsc')
                 ? 'GROUP BY t.nickName, t.firstName, t.lastName, t.age, t.rate, t.city, t.photos, t.sex, t.sexPreferences, t.tags, t.count, t.contact, t.distance, t.count_reports ORDER BY COUNT(t.tags) ASC, t.tags ASC'
                 : 'GROUP BY t.nickName, t.firstName, t.lastName, t.age, t.rate, t.city, t.photos, t.sex, t.sexPreferences, t.tags, t.count, t.contact, t.distance, t.count_reports ORDER BY COUNT(t.tags) DESC';
         }
-        if (sort === 'locationAsc' || sort === 'locationDesc')
-            sqlSort = (sort === 'locationAsc') ? 'distance ASC, age ASC, rate DESC, count DESC' : 'distance DESC, age ASC, rate DESC, count DESC';
+        if (sortType === 'locationAsc' || sortType === 'locationDesc')
+            sqlSort = (sortType === 'locationAsc') ? 'distance ASC, age ASC, rate DESC, count DESC' : 'distance DESC, age ASC, rate DESC, count DESC';
 
         // тут проверку на A > B?
         sqlFilter = (sex === 'both')
@@ -523,14 +541,55 @@ router.post('/users/page', async (req, res) => {
                     })
             })
             .catch((e) => {
-                // console.log(e.message);
                 res.status(200).json({
                     message: e.message,
                     success: false
                 })
             })
     } catch (e) {
-        // console.log(e.message);
+        res.status(200).json({
+            message: e.message,
+            success: false
+        })
+    }
+})
+
+router.post('/users/count/pages', async (req, res) => {
+    try {
+        const { nickname, mySex, mySexpref, ageFrom, ageTo, rateFrom, rateTo, sex, tags, distance } = req.body;
+        let sqlFilter = '',
+            params = [nickname, mySex, mySexpref, tags];
+
+        // тут проверку на A > B?
+        sqlFilter = (sex === 'both')
+            ? "AND (sex = 'female' OR sex = 'male') "
+            : `AND sex = '${sex}' `;
+        sqlFilter += `AND age > ${ageFrom} AND age < ${ageTo} AND rate > ${rateFrom} AND rate < ${rateTo} AND distance <= ${distance} `;
+        if (tags.length > 0)
+            sqlFilter += `AND tags && $4`;
+
+        getCountCards(params, sqlFilter)
+            .then(data => {
+                if (data.length > 0) {
+                    res.status(200).json({
+                        result: data.length,
+                        message: "Ok",
+                        success: true
+                    });
+                }
+                else
+                    res.status(200).json({
+                        message: "No users",
+                        success: false
+                    })
+            })
+            .catch((e) => {
+                res.status(200).json({
+                    message: e.message,
+                    success: false
+                })
+            })
+    } catch (e) {
         res.status(200).json({
             message: e.message,
             success: false
@@ -654,6 +713,24 @@ router.post('/profile/report', async (req, res) => {
             success: false
         })
     }
+})
+
+router.get('/notifications/:nickname', async (req, res) => {
+    const login = req.params.nickname;
+
+    getLogs([login])
+        .then(data => {
+            res.status(200).json({
+                data: data,
+                success: true
+            })
+        })
+        .catch((e) => {
+            res.status(200).json({
+                message: e.message,
+                success: false
+            })
+        })
 })
 
 module.exports = router;

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Card, Row, Col, Button, FormGroup, Label, Input } from 'reactstrap';
+import { Card, CardBody, Container, Row, Col, Button, FormGroup, Label, Input } from 'reactstrap';
 import { NavLink } from 'reactstrap';
 import { useState } from 'react';
 import { fetchLogin, setLogin, setPassword } from '../../redux/login/ActionCreators';
@@ -40,16 +40,17 @@ function LoginInput(props) {
 
     return (
         <Col>
-            <FormGroup>
-                <Label>Login</Label>
+            <FormGroup >
+                <Label className="font-profile-head">Login
                 <Input
-                    type="text"
-                    name="login"
-                    onChange={loginChange}
-                    placeholder="rkina7"
-                    required
-                    className={isValid}
-                />
+                        type="text"
+                        name="Login"
+                        onChange={loginChange}
+                        placeholder="rkina7"
+                        required
+                        className={isValid}
+                    />
+                </Label>
             </FormGroup>
         </Col>
     )
@@ -72,15 +73,16 @@ function Password(props) {
     return (
         <Col>
             <FormGroup>
-                <Label>Password</Label>
+                <Label className="font-profile-head">Password
                 <Input
-                    type="password"
-                    name='password'
-                    onChange={passChange}
-                    placeholder="Str0ngPa55%"
-                    required
-                    className={isValid}
-                />
+                        type="password"
+                        name='password'
+                        onChange={passChange}
+                        placeholder="Str0ngPa55%"
+                        required
+                        className={isValid}
+                    />
+                </Label>
             </FormGroup>
         </Col>
     )
@@ -101,7 +103,7 @@ function Login(props) {
         if (props.login.isLogged) {
             history.push("/users/page/1");
         }
-    }, [props.login.isLogged]);
+    }, [props.login.isLogged, history, props.login.nickname]);
 
     if (props.login.isLoading) {
         return (
@@ -109,7 +111,7 @@ function Login(props) {
         )
     }
 
-    if (nickname, hash) {
+    if (nickname && hash) {
         const data = {
             nickname: nickname,
             hash: hash
@@ -126,32 +128,38 @@ function Login(props) {
     }
 
     return (
-        <Row className="login-container">
-            <Col md={4} className="m-auto">
-                <Card body>
-                    {
-                        msg &&
-                        <Info message={msg} />
-                    }
-                    {
-                        props.login.errMsg && 
-                        <Info message={props.login.errMsg} isError={true} />
-                    }
-                    <form >
-                        <LoginInput setLogin={props.setLogin} />
-                        <Password setPass={props.setPassword} />
-                        <Col>
-                            <Button color="primary" onClick={Sign} >Sign in</Button>
-                        </Col>
-                    </form>
-                    <Col>
-                        <div className="dropdown-divider"></div>
-                        <NavLink href='/register' >Newbee? Sign up</NavLink>
-                        <NavLink href='/remind' >Forgot pass? Remind</NavLink>
+        <section className="login">
+            <Container >
+                <Row>
+                    <Col md={6} className="m-auto" >
+                        <Card className=" mb-4 shadow-sm">
+                            <CardBody>
+                                {
+                                    msg &&
+                                    <Info message={msg} />
+                                }
+                                {
+                                    props.login.errMsg &&
+                                    <Info message={props.login.errMsg} isSuccess={false} />
+                                }
+                                <form >
+                                    <LoginInput setLogin={props.setLogin} />
+                                    <Password setPass={props.setPassword} />
+                                    <Col>
+                                        <Button className="login-btn" color="secondary" onClick={Sign} >Sign in</Button>
+                                    </Col>
+                                </form>
+                                <Col>
+                                    <div className="dropdown-divider"></div>
+                                    <NavLink href='/register' >Newbee? Sign up</NavLink>
+                                    <NavLink href='/remind' >Forgot password? Remind</NavLink>
+                                </Col>
+                            </CardBody>
+                        </Card>
                     </Col>
-                </Card>
-            </Col>
-        </Row>
+                </Row>
+            </Container>
+        </section>
     )
 }
 

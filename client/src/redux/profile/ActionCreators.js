@@ -1,5 +1,6 @@
 import * as ActionTypes from './ActionTypes';
 import { request } from '../../util/http';
+import { socket } from "../../util/socket";
 
 export const profileLoading = () => ({
     type: ActionTypes.PROFILE_LOADING
@@ -98,11 +99,11 @@ export const fetchUpdateStatus = (me, you, status, newStatus) => (dispatch) => {
 
     return request('/api/user/profile/status/update', data, 'POST')
         .then(response => response.json())
-        // .then(result => dispatch(statusAdd(result)))
         .then(result => {
-            console.log('gere',result);
             if (result.message === 'Ok') {
                 dispatch(statusAdd(result));
+                data.newStatus = result.data;
+                socket.emit('notification', data);
             }
             else {
                 dispatch(statusFailed(result.message));
@@ -126,6 +127,10 @@ export const fetchUpdateView = (me, you) => (dispatch) => {
 
     return request('/api/user/profile/view', data, 'POST')
         .then(response => response.json())
+        .then(() => {
+            data.event = 'view';
+            socket.emit('notification', data);
+        })
         .catch(error => dispatch(updateViewFailed(error.message)));
 };
 

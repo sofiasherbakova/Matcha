@@ -8,11 +8,12 @@ import {
 import { Link } from 'react-router-dom';
 import classnames from 'classnames';
 import { fetchProfile, fetchView, fetchLike, fetchStatus, fetchUpdateStatus, fetchUpdateView, fetchReport } from '../../redux/profile/ActionCreators';
+import { fetchUpdateLogin } from '../../redux/login/ActionCreators';
 import { Loading } from '../Loading';
 import NotFound from '../notFound';
 import { request } from '../../util/http';
-import './Profile.css';
 import moment from 'moment';
+import './Profile.css';
 
 const mapStateToProps = (state) => {
     return {
@@ -23,6 +24,7 @@ const mapStateToProps = (state) => {
 }
 
 const mapDispatchToProps = (dispatch) => ({
+    fetchUpdateLogin: (nickname) => dispatch(fetchUpdateLogin(nickname)),
     fetchProfile: (nickname) => dispatch(fetchProfile(nickname)),
     fetchView: (nickname) => dispatch(fetchView(nickname)),
     fetchLike: (nickname) => dispatch(fetchLike(nickname)),
@@ -51,16 +53,18 @@ function PhotoList(props) {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const type = e.target.files[0].type;
-            if (!type.match("image/png") && !type.match("image/jpeg")) {
-                alert('feedback about photo format');
+            if (!type.match("image/png") && !type.match("image/jpeg") && !type.match("image/jpg")) {
+                alert('Wrong format!');
                 return;
             }
             let formData = new FormData();
             formData.append('photo', file);
             request(`/api/image/${props.me}/${item}`, formData, 'POST', 'image')
                 .then(data => {
-                    if (data)
+                    if (data) {
                         props.fetchProfile(props.me);
+                        props.fetchUpdateLogin(props.me);
+                    }
                 })
                 .catch(e => {
                     alert(e.message);
@@ -77,7 +81,7 @@ function PhotoList(props) {
                     {
                         props.check &&
                         <CardBody>
-                            <div className="d-flex justify-content-center align-items-center">
+                            <div className="d-flex justify-content-center">
                                 <Label className="btn btn-sm btn-success">Add
                                     <Input className="profile-input" type="file" onChange={e => putPhoto(e, item + 1)} />
                                 </Label>
@@ -128,8 +132,6 @@ function ViewsList(props) {
 
 function LikesList(props) {
     if (props.mylikes.length > 0) {
-        console.log(moment(props.mylikes[0].time, 'YYYY-MM-DD, h:mm:ss').fromNow());
-        console.log(props.mylikes[0].time);
         const listItems = props.mylikes.map((like, item) =>
             <Col xs="12" className="mt-4" key={item}>
                 <Media>
@@ -214,6 +216,13 @@ function AsideButton(props) {
     if (props.check) {
         return (
             <Row className="aside-button">
+                <span className="logged-status">
+                    {
+                        props.loggedStatus === 'Online'
+                            ? 'Online'
+                            : moment(props.lastVisit).fromNow()
+                    }
+                </span>
                 <Link to="/edit" className="btn btn-secondary ml-auto d-block">
                     Edit profile
                 </Link>
@@ -223,11 +232,21 @@ function AsideButton(props) {
     else {
         return (
             <Row className="aside-button" >
-                <Button color="danger"
-                    value={props.status === 'like' ? 'unlike' : 'like'}
-                    onClick={changeStatus}>
-                    {props.status === 'like' ? 'Unlike' : 'Like'}
-                </Button>
+                <span className="logged-status">
+                    {
+                        props.loggedStatus === 'Online'
+                            ? 'Online'
+                            : moment(props.lastVisit).fromNow()
+                    }
+                </span>
+                {
+                    (props.avatar !== '1.jpg') &&
+                    <Button color="danger"
+                        value={props.status === 'like' ? 'unlike' : 'like'}
+                        onClick={changeStatus}>
+                        {props.status === 'like' ? 'Unlike' : 'Like'}
+                    </Button>
+                }
                 <Button color="secondary"
                     className={props.status === 'ignore' ? 'disabled-button' : ''}
                     value='ignore'
@@ -241,17 +260,21 @@ function AsideButton(props) {
 }
 
 const Profile = (props) => {
-    useEffect(() => {
-        props.fetchProfile(props.match.params.nickname);
-        props.fetchView(props.match.params.nickname);
-        props.fetchLike(props.match.params.nickname);
-        if (props.login.me.nickname !== props.match.params.nickname) {
-            props.fetchStatus(props.login.me.nickname, props.match.params.nickname);
-            props.fetchUpdateView(props.login.me.nickname, props.match.params.nickname);
-        }
-    }, [props.match.params.nickname, props.profile.status]);
+    const login = props.login.me.nickname;
+    // const logged = props.profile.info.loggedstatus;
+    const { nickname } = props.match.params;
+    const { status } = props.profile;
+    const { fetchProfile, fetchView, fetchLike, fetchStatus, fetchUpdateView } = props;
 
-    // console.log(props.profile);
+    useEffect(() => {
+        fetchProfile(nickname);
+        fetchView(nickname);
+        fetchLike(nickname);
+        if (login !== nickname) {
+            fetchStatus(login, nickname);
+            fetchUpdateView(login, nickname);
+        }
+    }, [nickname, login, status, fetchProfile, fetchView, fetchLike, fetchStatus, fetchUpdateView]);
 
     const [activeTab, setActiveTab] = useState('1');
     const toggle = tab => {
@@ -295,6 +318,9 @@ const Profile = (props) => {
                         status={props.profile.status}
                         me={props.login.me.nickname}
                         you={props.match.params.nickname}
+                        avatar={props.login.me.photos[0][1]}
+                        loggedStatus={props.profile.info.loggedstatus}
+                        lastVisit={props.profile.info.lastvisit}
                         fetchUpdateStatus={props.fetchUpdateStatus}
                         fetchReport={props.fetchReport}
                     />
@@ -332,7 +358,7 @@ const Profile = (props) => {
                     }
 
                     <p className="font-profile-head">Photo</p>
-                    <PhotoList photos={props.profile.info.photos} check={isMe} me={props.profile.info.nickname} fetchProfile={props.fetchProfile} />
+                    <PhotoList photos={props.profile.info.photos} check={isMe} me={props.profile.info.nickname} fetchProfile={props.fetchProfile} fetchUpdateLogin={props.fetchUpdateLogin} />
 
                     <Row className="profile-tabs">
                         <Col>

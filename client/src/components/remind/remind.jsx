@@ -1,12 +1,14 @@
 import React from 'react';
 import { useState } from 'react';
-import { NavLink, Card, CardText, Button, Col, Container, Input, Row } from 'reactstrap';
-import Alert from 'reactstrap/lib/Alert';
+import { Button, Col, Container, Input, Row, Card, CardBody, Label, NavLink } from 'reactstrap';
 import { request } from '../../util/http';
+import Info from '../info';
+import '../login/Login.css';
 
 const Remind = () => {
     const [email, setEmail] = useState('');
     const [msg, setMsg] = useState(null);
+    const [isSuccess, setSuccess] = useState(null);
 
     const remind = () => {
         const data = {
@@ -16,35 +18,41 @@ const Remind = () => {
         request('/api/remind', data, 'POST')
             .then(res => res.json())
             .then(res => {
-                setMsg('wow');
-                console.log(res.message);
+                setMsg(res.message);
+                setSuccess(res.success);
             })
     }
 
     return (
-       <section className="page-state">
+        <section className="login">
             <Container>
-                <Row className="login">
+                <Row>
                     <Col md={6} className="m-auto">
-                        {
-                            msg &&
-                        <Alert color='success'>{msg} Check your email</Alert>
-                        }
-                        <Card body>
-                            <CardText >
-                                Enter your email address to receive a secured link
-                            </CardText>
-                            <CardText>
-                                <Input onChange={(e) => setEmail(e.target.value)} />
-                            </CardText>
-                            <Button className='mt-6' onClick={remind} color='primary'>Recovery</Button>
-                            <NavLink href='/login' >Back</NavLink>
+                        <Card className="mb-4 shadow-sm">
+                            <CardBody>
+                                {
+                                    msg &&
+                                    <Info message={msg} isSuccess={isSuccess} />
+                                }
+                                <Col>
+                                    <Label className="font-profile-head">
+                                        Enter your email address to receive a secured link
+                                    <Input onChange={(e) => setEmail(e.target.value)} />
+                                    </Label>
+                                </Col>
+                                <Col>
+                                    <Button className="login-btn" onClick={remind} color='secondary'>Recovery</Button>
+                                </Col>
+                                <Col>
+                                    <div className="dropdown-divider"></div>
+                                    <NavLink href='/login' >Back</NavLink>
+                                </Col>
+                            </CardBody>
                         </Card>
                     </Col>
                 </Row>
             </Container>
-        </section>
-
+        </section >
     )
 }
 

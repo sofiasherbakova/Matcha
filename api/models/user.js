@@ -43,7 +43,7 @@ const getLogin = (login) => {
 
 const getProfile = (nickname) => {
   const sql = `SELECT nickName, firstName, lastName, email, date_part('year', age(dateBirth::date)) AS age, count_reports,
-  sexPreferences, sex, rate, about, photos, location[1] AS country, location[2] AS city, 
+  sexPreferences, sex, rate, about, photos, location[1] AS country, location[2] AS city, loggedStatus, lastVisit,
   (SELECT array_agg(t.tag) FROM Tags t JOIN User_Tags ut ON ut.idTag = t.id WHERE ut.idUser = (SELECT id FROM Users WHERE nickName = $1)) AS tags
   FROM Users WHERE nickName=$1`;
 
@@ -80,13 +80,27 @@ const sendMessage = (params) => {
       (SELECT id FROM Users WHERE nickName = $2),
       $3
   )
-  RETURNING id`;
+  RETURNING $1 AS nick, $2 AS nickTo, message, createdat, type, id`;
+
+  return db.one(sql, params);
+}
+
+const sendFileMessage = (params) => {
+  const sql = `INSERT INTO Chat (idFrom, idTo, message, type, path) VALUES
+  ( 
+      (SELECT id FROM Users WHERE nickName = $1),
+      (SELECT id FROM Users WHERE nickName = $2),
+      $3,
+      $4,
+      $5
+  )
+  RETURNING $1 AS nick, $2 AS nickTo, message, createdat, type, path as pathFile, id`;
 
   return db.one(sql, params);
 }
 
 const getMessage = (params) => {
-  const sql = `SELECT a.nickName, b.nickName, c.message FROM Chat c
+  const sql = `SELECT a.nickName AS nick, a.photos[1][2] AS path, c.message, c.createdat, c.type, c.id, c.path AS pathFile FROM Chat c
   JOIN Users a ON a.id = c.idFrom
   JOIN Users b ON b.id = c.idTo
   WHERE (a.nickName = $1 AND b.nickName = $2) OR (a.nickName = $2 AND b.nickName = $1)
@@ -130,11 +144,16 @@ const putImage = (position, type, src, login) => {
   return db.one(sql, params);
 };
 
-const getImage = (login, position) => {
-  const params = [position, login];
-
+const getImage = (params) => {
   const sql =
     `SELECT photos[$1][1] FROM Users WHERE nickName = $2`
+
+  return db.any(sql, params);
+}
+
+const getChatImage = (params) => {
+  const sql =
+    `select type from chat where path = $1`
 
   return db.any(sql, params);
 }
@@ -148,7 +167,7 @@ const getTimeView = (params) => {
   return db.any(sql, params);
 }
 
-const updateViewFailed = (params) => {
+const updateView = (params) => {
   const sql =
     `UPDATE History SET visiTime = CURRENT_TIMESTAMP
   WHERE idVisitor = (SELECT id FROM Users WHERE nickName = $1)
@@ -157,7 +176,7 @@ const updateViewFailed = (params) => {
   return db.one(sql, params);
 }
 
-const insertViewFailed = (params) => {
+const insertView = (params) => {
   const sql =
     `INSERT INTO History (idVisitor, idVisited, visiTime)
   VALUES(
@@ -372,7 +391,7 @@ const getCities = (params) => {
 }
 
 const getCountMessage = (params) => {
-  const sql = `SELECT COUNT(c.message) FROM Chat c
+  const sql = `SELECT COUNT(c.id) FROM Chat c
   JOIN Users a ON a.id = c.idFrom
   JOIN Users b ON b.id = c.idTo
   WHERE (a.nickName = $1 AND b.nickName = $2) OR (a.nickName = $2 AND b.nickName = $1)`;
@@ -411,6 +430,62 @@ const updateRate = (params) => {
   return db.one(sql, params);
 }
 
+const getConnectedUsers = (params) => {
+  const sql = `SELECT nickName, path FROM 
+  (SELECT
+    (SELECT nickname FROM Users WHERE id = a.idFrom) AS nickName,
+    (SELECT photos[1][2] FROM Users WHERE id = a.idFrom) AS path,
+    createdAt FROM Connections a
+      WHERE exists 
+      (SELECT * from Connections b
+          WHERE 
+          status = 'like' 
+          AND a.idFrom = b.idTo 
+          AND a.idTo = b.idFrom 
+          AND (idFrom = myId($1) OR idTo = myId($1))
+          )
+  ) as res
+  WHERE nickName != $1
+  ORDER BY createdAt DESC`;
+  
+  return db.any(sql, params);
+}
+
+const setStatus = (params) => {
+  const sql = `UPDATE Users 
+  SET loggedStatus = $1, 
+  lastVisit = CURRENT_TIMESTAMP 
+  WHERE nickName =$2
+  RETURNING nickName`;
+
+  return db.one(sql, params);
+}
+
+const getLogs = (params) => {
+  const sql = `SELECT 
+  $1 AS nickTo, (SELECT nickname FROM Users WHERE id = l.idFrom), l.event, l.message, l.time
+  FROM Logs AS l WHERE idTo = myId($1) ORDER BY l.time DESC LIMIT 10`;
+
+  return db.any(sql, params)
+}
+
+const addLog = (notification) => {
+  const sql = `INSERT INTO Logs (idFrom, idTo, event, message) VALUES
+  (myId($1), myId($2), $3, $4)
+  RETURNING id`;
+
+  return db.one(sql, Object.values(notification));
+}
+
+const checkConnect = (params) => {
+  const sql = `
+  SELECT status, idFrom, idTo FROM Connections WHERE idFrom = myId($2) AND idTo = myId($1) AND status = 'like'
+  UNION 
+  SELECT status, idFrom, idTo FROM Connections WHERE idFrom = myId($1) AND idTo = myId($2) AND status = 'like'`;
+
+  return db.any(sql, params);
+}
+
 exports.sign = sign;
 exports.getPassword = getPassword;
 exports.getOnlyPass = getOnlyPass;
@@ -420,6 +495,7 @@ exports.getProfile = getProfile;
 exports.getViews = getViews;
 exports.getLikes = getLikes;
 exports.sendMessage = sendMessage;
+exports.sendFileMessage = sendFileMessage;
 exports.getMessage = getMessage;
 exports.getCards = getCards;
 exports.getStatus = getStatus;
@@ -427,9 +503,10 @@ exports.updateStatus = updateStatus;
 exports.insertStatus = insertStatus;
 exports.putImage = putImage;
 exports.getImage = getImage;
+exports.getChatImage = getChatImage;
 exports.getTimeView = getTimeView;
-exports.updateViewFailed = updateViewFailed;
-exports.insertViewFailed = insertViewFailed;
+exports.updateView = updateView;
+exports.insertView = insertView;
 exports.editProfile = editProfile;
 exports.deleteTags = deleteTags;
 exports.insertTags = insertTags;
@@ -451,3 +528,8 @@ exports.getCountMessage = getCountMessage;
 exports.insertReport = insertReport;
 exports.updateCountReports = updateCountReports;
 exports.updateRate = updateRate;
+exports.getConnectedUsers = getConnectedUsers;
+exports.setStatus = setStatus;
+exports.getLogs = getLogs;
+exports.addLog = addLog;
+exports.checkConnect = checkConnect;

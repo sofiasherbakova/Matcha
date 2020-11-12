@@ -1,6 +1,6 @@
 {
     "port": "5000",
-    "urlDb": "postgres://ffood:pps@localhost:5432/flamefood",
+    "urlDb": "postgres://fffood:wwq@localhost:5432/fffood",
     "salt": "_271kweV77",
     "email": "matcha.rm.nd@gmail.com",
     "emailPass": "wwqfd123",

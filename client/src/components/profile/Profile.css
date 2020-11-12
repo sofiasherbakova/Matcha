@@ -4,12 +4,15 @@ text-break переносит не вмещенный текст
 
 /* profile */
 
-.profile, .profile-edit {
-  padding: 20px 0;
+.profile,
+.profile-edit {
+  padding: 0;
+  padding-top: 50px;
+  padding-bottom: 100px;
 }
 
 .nav-item a {
-  color: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .profile-avatar {
@@ -31,7 +34,7 @@ h2 {
   margin-bottom: 0.5rem;
   font-weight: bold;
   font-size: 1.2rem;
-  color: #5a6268;
+  color: #54a8f3;
 }
 
 .font-profile-head:nth-child(2) {
@@ -74,9 +77,16 @@ h2 {
   object-fit: cover;
 }
 
-.aside-button {
+.profile .aside-button {
   margin-bottom: 20px;
+  margin-right: 0;
   justify-content: flex-end;
+  position: relative;
+}
+
+.aside-button .logged-status {
+  position: absolute;
+  left: 15px;
 }
 
 .aside-button button {
@@ -84,7 +94,7 @@ h2 {
 }
 
 .dropdown-menu {
-  transform: translate3d(-115px, 40px, 0px) !important; 
+  transform: translate3d(-115px, 40px, 0px) !important;
 }
 
 .dropdown-menu button,
@@ -97,11 +107,10 @@ h2 {
   opacity: 50%;
 }
 
-.profile .tab-content
-{
-    height: 400px;
-    /* max-height: 400px; */
-    overflow-x: hidden;
+.profile .tab-content {
+  height: 400px;
+  /* max-height: 400px; */
+  overflow-x: hidden;
 }
 
 .alert-info {
@@ -136,10 +145,6 @@ h2 {
   height: 300px;
 }
 
-.profile-tabs-item {
-  opacity: .5;
-}
-
-.modal-content .modal-body > *{
+.modal-content .modal-body > * {
   margin-top: 15px;
 }

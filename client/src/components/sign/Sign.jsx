@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { setLogin, setFirstName, setLastName, setEmail, setPassword, setRepassword, setDate, fetchRegister, setSex } from '../../redux/sign/ActionCreators';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { NavLink, Card, Row, Col, FormGroup, Label, Input, FormFeedback, Button, Container, Alert } from 'reactstrap';
+import { NavLink, Card, CardBody, Row, Col, FormGroup, Label, Input, FormFeedback, Button, Container, Alert } from 'reactstrap';
 import { isValidInput, isValidPassword } from '../../util/check';
 import { request } from '../../util/http';
 import { useHistory } from "react-router-dom";
 import { Loading } from '../Loading';
-import './Sign.css';
+import '../login/Login.css';
 
 const mapStateToProps = (state) => {
     return {
@@ -40,23 +40,24 @@ function InputForm(props) {
         }
         else
             toggleValid('is-invalid');
-
     };
 
     return (
         <Col>
             <FormGroup>
-                <Label>{props.labelName}</Label>
-                <Input
-                    type={props.type}
-                    name={props.name}
-                    onChange={nameChange}
-                    onBlur={props.onBlur()}
-                    placeholder={props.placeholder}
-                    required
-                    className={isValid}
-                />
-                <FormFeedback>{props.feedback}</FormFeedback>
+                <Label className="font-profile-head">
+                    {props.labelName}
+                    <Input
+                        type={props.type}
+                        name={props.name}
+                        onChange={nameChange}
+                        onBlur={props.onBlur}
+                        placeholder={props.placeholder}
+                        required
+                        className={isValid}
+                    />
+                    <FormFeedback>{props.feedback}</FormFeedback>
+                </Label>
             </FormGroup>
         </Col>
     )
@@ -92,17 +93,11 @@ function InputFormWithFetch(props) {
         }
     };
 
-    if (props.isLoading) {
-        return (
-            <Loading />
-        )
-    }
-
     return (
-        <Row>
-            <Col>
-                <FormGroup>
-                    <Label>{props.labelName}</Label>
+        <Col>
+            <FormGroup>
+                <Label className="font-profile-head">
+                    {props.labelName}
                     <Input
                         type="text"
                         name={props.labelName}
@@ -114,9 +109,9 @@ function InputFormWithFetch(props) {
                         className={isValid}
                     />
                     <FormFeedback>{feedback}</FormFeedback>
-                </FormGroup>
-            </Col>
-        </Row>
+                </Label>
+            </FormGroup>
+        </Col>
     )
 }
 
@@ -148,35 +143,39 @@ function Password(props) {
 
     return (
         <Row>
-            <Col sm={6}>
+            <Col>
                 <FormGroup>
-                    <Label>Password</Label>
+                    <Label className="font-profile-head">
+                        Password
                     <Input
-                        id="1"
-                        type="password"
-                        name='password'
-                        onChange={passChange}
-                        onBlur={() => props.onBlur()}
-                        placeholder="Str0ngPa55%"
-                        required
-                        className={isValidPass}
-                    />
-                    <FormFeedback>Too weak password. 8 symbols is required</FormFeedback>
+                            id="1"
+                            type="password"
+                            name='password'
+                            onChange={passChange}
+                            onBlur={() => props.onBlur()}
+                            placeholder="Str0ngPa55%"
+                            required
+                            className={isValidPass}
+                        />
+                        <FormFeedback>Too weak password. 8 symbols is required</FormFeedback>
+                    </Label>
                 </FormGroup>
             </Col>
-            <Col sm={6}>
+            <Col>
                 <FormGroup>
-                    <Label>Re-Password</Label>
+                    <Label className="font-profile-head">
+                        Re-Password
                     <Input
-                        type="password"
-                        name='repassword'
-                        onChange={passChange}
-                        onBlur={() => props.onBlur()}
-                        placeholder="Str0ngPa55%"
-                        required
-                        className={isValidRepass}
-                    />
-                    <FormFeedback>Password doesn't match</FormFeedback>
+                            type="password"
+                            name='repassword'
+                            onChange={passChange}
+                            onBlur={() => props.onBlur()}
+                            placeholder="Str0ngPa55%"
+                            required
+                            className={isValidRepass}
+                        />
+                        <FormFeedback>Password doesn't match</FormFeedback>
+                    </Label>
                 </FormGroup>
             </Col>
         </Row>
@@ -221,54 +220,65 @@ const Sign = (props) => {
             <Loading />
         )
     }
-
-    if (props.errMsg) {
+    else if (props.errMsg) {
         return (
             <Alert color='info'>{props.errMsg}</Alert>
         )
     }
-
-    return (
-        <Col md={4} className="m-auto">
-            <Card className="sign-container" body>
-                <Container >
-                    <Row xs='2'>
-                        <InputForm
-                            set={props.setLastName} onBlur={checkBtn} labelName='Last name'
-                            name='lastName' placeholder='Ng' type='text' feedback='Only symbols are required'
-                        />
-                        <InputForm
-                            set={props.setFirstName} onBlur={checkBtn} labelName='First name'
-                            name='firstName' placeholder='Duong' type='text' feedback='Only symbols are required'
-                        />
-                    </Row>
-                        <InputFormWithFetch set={props.setLogin} onBlur={checkBtn} labelName='Login' placeholder='rkina7' />
-                        <InputFormWithFetch set={props.setEmail} onBlur={checkBtn} labelName='Email' placeholder='rkina@mail.ru' />
+    else
+        return (
+            <section className="login">
+                <Container>
                     <Row>
-                        <InputForm
-                            set={props.setDate} onBlur={checkBtn} labelName='Date birth'
-                            name='birthDate' type='date' feedback='You too young for this'
-                        />
-                        <Col>
-                            <label>Sex</label>
-                            <Input type='select' defaultValue={props.sign} onChange={e => {
-                                props.setSex(e.target.value);
-                                checkBtn();
-                            }}>
-                                <option value="female">Female</option>
-                                <option value="male">Male</option>
-                            </Input>
+                        <Col md={10} className="m-auto">
+                            <Card className="mb-4 shadow-sm">
+                                <CardBody>
+                                    <Row>
+                                        <InputForm
+                                            set={props.setLastName} onBlur={checkBtn} labelName='Last name'
+                                            name='lastName' placeholder='Ng' type='text' feedback='Only symbols are required'
+                                        />
+
+                                        <InputForm
+                                            set={props.setFirstName} onBlur={checkBtn} labelName='First name'
+                                            name='firstName' placeholder='Duong' type='text' feedback='Only symbols are required'
+                                        />
+                                    </Row>
+                                    <Row>
+                                        <InputFormWithFetch set={props.setLogin} onBlur={checkBtn} labelName='Login' placeholder='rkina7' />
+                                        <InputFormWithFetch set={props.setEmail} onBlur={checkBtn} labelName='Email' placeholder='rkina@mail.ru' />
+                                    </Row>
+                                    <Row>
+                                        <InputForm
+                                            set={props.setDate} onBlur={checkBtn} labelName='Date birth'
+                                            name='birthDate' type='date' feedback='You too young for this'
+                                        />
+                                        <Col>
+                                            <p className="font-profile-head">Sex</p>
+                                            <Input type='select'
+                                                defaultValue={props.sign.sex}
+                                                onChange={e => {
+                                                    props.setSex(e.target.value);
+                                                    checkBtn();
+                                                }}>
+                                                <option value="female">Female</option>
+                                                <option value="male">Male</option>
+                                            </Input>
+                                        </Col>
+                                    </Row>
+                                    <Password setPass={props.setPassword} onBlur={checkBtn} />
+                                    <Button color="secondary" type="submit" disabled={isActiveBtn} onClick={handleSubmit} onBlur={checkBtn} block>Sign Up</Button>
+                                    <Col>
+                                        <div className="dropdown-divider"></div>
+                                        <NavLink href='/login' >Back</NavLink>
+                                    </Col>
+                                </CardBody>
+                            </Card>
                         </Col>
                     </Row>
-                    <Password setPass={props.setPassword} onBlur={checkBtn} />
-                    <Col className="m-auto" sm={{ size: 4, order: 1, offset: 2}}>
-                        <Button color="primary" type="submit" disabled={isActiveBtn} onClick={handleSubmit} onBlur={checkBtn} block>Sign Up</Button>
-                        <NavLink className="center" href='/login' >Back</NavLink>
-                    </Col>
                 </Container>
-            </Card>
-        </Col>
-    )
+            </section>
+        )
 }
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Sign));

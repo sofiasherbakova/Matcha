@@ -7,7 +7,7 @@ const NotFound = () => {
     return (
         <section className="page-state">
             <Container>
-                <Info message='gasd' isError={true} />
+                <Info isSuccess={true} message="404 page not found"/>
             </Container>
         </section>
     )

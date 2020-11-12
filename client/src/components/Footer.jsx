@@ -1,11 +1,12 @@
-import React from 'react';
+import React from "react";
 import { Container } from 'reactstrap';
 
-function Footer(props) {
+function Footer() {
+
     return (
         <div className="footer bg-light">
             <Container>
-                <h2>footer</h2>
+                <p>By Ffood and Jslave.</p>
             </Container>
         </div>
     )

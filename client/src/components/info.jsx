@@ -3,13 +3,15 @@ import { Alert } from "reactstrap";
 
 const Info = (props) => {
     const [isVisible, setClose] = useState(true);
-    const color = props.isError ? 'danger' : 'success';
+    const color = props.isSuccess ? 'success' : 'danger';
 
-    // useEffect(() => {
-    //     window.setTimeout(() => {
-    //         setClose(!isVisible);
-    //     }, 5000);
-    // }, []);
+    useEffect(() => {
+        if (isVisible) {
+            window.setTimeout(() => {
+                setClose(!isVisible);
+            }, 5000);
+        }
+    }, [isVisible]);
 
     return (
         <div>
